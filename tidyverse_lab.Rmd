@@ -1,0 +1,328 @@
+---
+title: "R Notebook"
+author: "Lab completed by April Salazar"
+subtitle: Lab authored by Joanna Lankester, PhD for CS 48A
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+# Introduction
+In this lab, we'll use tidyverse - more specifically, several dplyr library functions - to extract data in the format we need for our visualizations. This data transformation will allow us to create plots that we can't plot from the raw data, for example, from subsets of data or from data that has been grouped by a particular trait and aggregated.
+
+This lab will require saving some results to variables where specified. Let's try it; run the following code to save the value 5 to the variable Q0: 
+```{r}
+Q0 <- 5
+```
+
+Now run this to check the value of Q0: 
+```{r}
+Q0
+```
+
+Note that we could also use the equals sign to save the value 5 to Q0. Additionally, we could use one code chunk to both assign the variable and check the value by putting the Q0 check at the end of the chunk. Run this to check that both of these claims are true: 
+```{r}
+Q0 = 5
+Q0
+```
+
+# Instructions
+
+- Run each chunk of code in order.
+- Some steps will require code and will be marked with an asterisk\*. Others will require a written response and will be marked with an asterisk and (response), like this: \*(response)
+- Important: where specified, please be sure to assign the variable exactly as named. For example, the above chunks required assigning to a variable Q0, which was capital Q followed by 0. Please do not name this as q0, Q_0, Q00, or anything else that isn't literally Q0. 
+- Where not specified, you do not need to assign the result to a variable. 
+
+### Q1. Run the following chunk to load the libraries needed for this lab. 
+There may be some warnings and messages about conflicts. These are ok as long as the library loads.
+```{r}
+library(tidyverse)
+library(reshape2)
+
+# the following is being defined so that you can use it later with plots, if you wish
+larger_font <- theme(axis.title = element_text(size=14)) +
+    theme(axis.text = element_text(size=12))
+```
+
+### Q2. Run the following chunk to load the datasets needed for this lab. 
+```{r}
+df_tips = tips %>% 
+    mutate(tip_percent = tip/total_bill*100)
+
+states <- cbind(state.abb,state.region,state.division,data.frame(state.x77)) %>% 
+    rename(region=state.region,division=state.division,abb=state.abb,income_per_capita = Income) %>% 
+    mutate(income = income_per_capita * Population)
+```
+
+# Part 1
+- Main goal: use filtering to allow plotting of a subset of data
+- Secondary goal: practice creating distribution plots
+
+### Q3. Run this to see what the df_tips data frame looks like. 
+```{r}
+df_tips %>% 
+    head()
+```
+
+### Q4. Run this to see how many rows are in the data frame. 
+```{r}
+df_tips %>% 
+    tally()
+```
+
+### Q5\*. Get only the restaurant bills in df_tips greater than $20. *Save the result as Q5.*
+```{r}
+Q5 <- df_tips %>% 
+    filter(total_bill > 20)
+# you can leave this here to check your work
+Q5
+```
+
+
+### Q6*. Find the number of restaurant bills in df_tips greater than $20. Save the result as Q6.
+Hint: borrow syntax from prior questions. 
+```{r}
+Q6 = 97
+Q6
+```
+
+### Q7*. Plot a histogram of the tip percent only for restaurant bills greater than $20. 
+Hint: borrow some of the syntax from a prior question. 
+Remember to add necessary titles and labels.
+```{r}
+ggplot(Q5,aes(x=tip_percent)) + 
+    geom_histogram(bins =8, fill = "cornflowerblue", color = "green") +
+    labs(title="Number of tips by percentage for bills > $20, AS", x="tips (%)")
+```
+### Q8*. Plot a boxplot of the tip percent by day of the week only for restaurant bills greater than $20. 
+Hint: borrow some of the syntax from a prior question. 
+Remember to add necessary titles and labels.
+```{r}
+ggplot(Q5,aes(x=day,y=tip_percent,color=day)) + 
+    geom_boxplot() +
+    labs(title="Tip percentage by day of the week for bills > $20, AS", y="tips (%)")
+```
+### Q9*(response only). Interpret the plot from Q8 given the following questions. On which day of the week were the highest tip percentages received, and on which day of the week were the most consistent tip percentages received? 
+
+- The highest tips were on **Sunday**.
+- The most consistent tips were on **Friday**.
+
+
+# Part 2
+- Main goal: Use group_by and aggregation functions to allow more complex tables and plots than we could have made from raw data
+- Secondary goal: Get introduced to some additional syntax (top_n, fct_reorder) 
+
+### Q10. Run this to see what the states data frame looks like. 
+This data frame contains statistics for different states in 1974.
+```{r}
+states %>% head()
+```
+
+### Q11*. Make a table of region and sum of income for that region. Call this sum of income column "total_income". Save the table to a variable called Q11.
+
+Hints: 
+
+- We need a result *for each* region. 
+- *For each* generally means we will use *group_by*.
+
+```{r}
+Q11 = states %>%
+    group_by(region) %>%
+    summarize(total_income = sum(income))
+Q11
+```
+
+### Q12*. Get the full row for the top 4 states in population for each region. Save this result as Q12.
+To do this, use the top_n function, which will use a syntax like:
+*top_n(number, variable)*
+The number will be the top number of rows you want, and the variable will be the variable that should be used for selecting that top number. 
+```{r}
+Q12 = states %>%
+    group_by(region) %>%
+    top_n(4, Population)
+Q12
+```
+
+As you've noticed, there are 4 regions in this data frame which have differing amounts of total income. We would like to visualize how much of each region's income comes from the 4 most populous states. We will do this in several steps. 
+
+### Q13\*. Create a table with one column as the region and another column as the sum of the region's income that comes from the top 4 most populous states. Name the second column *top_4_income*.  Save the table as a variable Q13.
+Hint: this can be done entirely using a combination of syntax from the prior steps. 
+```{r}
+Q13 = states %>%
+    group_by(region) %>%
+    top_n(4, Population) %>%
+    summarize(top_4_income = sum(income))
+Q13
+```
+
+### Q14. Run this provided code to merge the two relevant data frames. 
+```{r}
+Q14 <- merge(Q11,Q13,on="region")
+Q14
+```
+
+### Q15. Run this provided code to convert the data from its current wide format to long format. 
+```{r}
+Q15 <- melt(Q14,variable.name = "income_category",value.name = "income",id.vars = "region")
+Q15
+```
+
+### Q16*. Use the Q15 answer to create a grouped bar plot by region according to the following instructions. 
+
+- Each region should have two bars in different colors - one color for total_income, and one color for top_4_income. 
+- Customize the plot by adding title/labels, adding a theme, and enlarging the font (see Q1; you can reuse the larger_font variable, if you wish).
+- We will further improve the plot in the next step.
+```{r}
+ggplot(Q15,aes(x=region,y=income,fill=income_category)) + 
+    geom_col(position="dodge") +
+    labs(title="Income of the 4 most populous states per region, AS",x="region",y="income (USD)") +
+    theme_minimal() +
+    larger_font
+```
+### Q17*. Improve your plot from Q16 in the following ways: 
+
+- Instead of using *x=region*, use *x=fct_reorder2(region,income_category,income)*. Notice how the regions are now ordered by the length of one of the bars. 
+- Make the legend have a better title. You can do this inside the labs() command where you set the x label, y label, and title. Here you can use *fill="..."* to title the legend. 
+- Customize the colors by adding onto the plot a line of code like this (choose your own favorite color scheme!): *scale_fill_manual(labels=c("full region","largest 4 states"),values=c("gray","slateblue"))*
+
+```{r}
+# copy and paste your Q16 code here, and add the modifications specified
+ggplot(Q15,aes(x=fct_reorder2(region,income_category,income),y=income,fill=income_category)) + 
+    geom_col(position="dodge") +
+    labs(title="Income of the 4 most populous states per region, AS",x="region",y="income (USD)", fill="population categories") +
+    theme_minimal() +
+    larger_font +
+    scale_fill_manual(labels=c("full region","largest 4 states"),values=c("mediumorchid","plum2"))
+```
+
+### Q18*(response only). Interpret the plot by answering the following questions: 
+
+- In which two regions do the most populous states create the largest portion of the region's income? **Northeast and West**
+- In which region is the income *least* determined by the most populous states? **South**
+
+### Q19*. Create a stacked bar plot for each region with the income of the 4 most populous states. We will improve the plot in several steps.
+
+In this step: 
+
+- Create a stacked bar plot of income by region. Hint: start with the data frame from Q12.
+- Encode the states using the fill color. 
+- Add title, labels, a theme, and enlarged font. 
+```{r}
+ggplot(Q12,aes(x=region,y=income,fill=abb)) +
+    geom_col() +
+    labs(title="Income of most populous states per region, AS",y="income (USD)") +
+    theme_minimal() +
+    larger_font
+```
+### Q20*. Trying to match the color to the legend is too difficult. Improve the plot as follows: 
+
+- Add text to directly label the segments by adding the following code to the plot: *geom_text(aes(label=abb,y=income),position=position_stack(vjust=0.5))*
+- Get rid of the legend by putting *show.legend = FALSE* inside the geom_col() parentheses. 
+```{r}
+ggplot(Q12,aes(x=region,y=income,fill=abb)) + 
+    geom_col(show.legend = FALSE) +
+    geom_text(aes(label=abb,y=income),position=position_stack(vjust=0.5)) +
+    labs(title="Income of most populous states per region, AS",y="income (USD)") +
+    theme_minimal() +
+    larger_font
+```
+### Q21*. The plot could still look better. Improve the plot as follows: 
+
+- Order the segments within each bar by replacing *fill=abb* with *fill=fct_reorder(abb,income)*.
+- Add an outline around each segment by adding the following inside the parentheses for geom_col(): *color="black"*. Feel free to customize this color. Be sure to separate it from the *show.legend=FALSE* part using a comma.
+
+```{r}
+ggplot(Q12,aes(x=region,y=income,fill=fct_reorder(abb,income))) + 
+    geom_col(show.legend = FALSE, color="black") +
+    geom_text(aes(label=abb,y=income),position=position_stack(vjust=0.5)) +
+    labs(title="Income of most populous states per region, AS",y="income (USD)") +
+    theme_minimal() +
+    larger_font
+```
+### Q22*(response only). Interpret the plot by answering the following questions: 
+
+- Which two states make up a huge proportion of their region's income? **California and New York**
+- Does this plot agree with the plot from Q17? Briefly explain your answer. **It does agree, but in the latter plot, we are looking at individual states per region. Versus in the Q17 plot, we examine top four states, as opposed to one, compared with the rest of the region.**
+
+# Part 3
+
+- Main goal: See a case where data visualization gives us a **much** different insight than the summary statistics can. 
+- Secondary goal: Practice transforming data to make a richer plot than we could make directly from the raw data. 
+
+### Q23. Run this to see what the ChickWeight dataset looks like: 
+```{r}
+ChickWeight %>% head()
+ChickWeight %>% tail()
+```
+
+### Q24\*. Create a table of the median chick weight for each diet. Call the column containing this median weight *median_weight*. Save this table as Q24. 
+```{r}
+Q24 <- ChickWeight %>% 
+    group_by(Diet) %>%
+    summarize(median_weight = median(weight))
+Q24
+```
+
+
+We don't know if this tells the whole story. 
+The chicks grew, but it's possible that those in one diet were measured less often than those in another. 
+Let's look at some general exploratory analysis. Write code that answers these questions: 
+
+### Q25*. How many rows are there for each diet? Save the result as Q25. 
+```{r}
+Q25 = table(ChickWeight$Diet)
+Q25
+```
+
+### Q26*. How many rows are there for each chick? Save the result as Q26.
+Note! this will also tell you how many chicks there are in this data. There will be one row per chick.
+```{r}
+Q26 <- ChickWeight %>% 
+   group_by(Chick) %>%
+   summarize(Count = n())
+   ### arrange()     *I'm trying to look up how to reorder Chick from 1-5 to make it cleaner, but having trouble.
+Q26
+```
+### Q27*. How many chicks were on each diet? Create a table that answers this question and save it to variable Q27.
+
+Hint: Keep in mind the answers above, especially Q26.
+```{r}
+Q27 <- ChickWeight %>% 
+   group_by(Diet) %>%
+   summarize(count_distinct = n_distinct(Chick))
+   ### tally()     *I'm also trying to figure out how to use the function tally(), instead of summarize(). I did achieve the desired output.
+Q27
+```
+### Q28*. Plot the trajectory of the median weight for each diet over time. 
+
+This will require some of the functions we used earlier to get the data to the needed format prior to plotting. To do this, think about what format you would need for the data in order to have a time series plot for each diet. Work with the data until you get a data frame from the ChickWeight data frame that has the needed format. Then plot this result.
+
+Keep in mind when making the plot:
+
+- Include units of grams and days as applicable. 
+- Include a title. 
+- Set a theme.
+
+Hint: This plot should have smooth lines going up to the right (the chicks grow). If you get a plot that looks like zigzags or shark teeth, something went wrong - please take another look, and ask about this in the Slack channel.
+
+```{r}
+Q28 <- ChickWeight %>%
+   group_by(Time, Diet) %>%
+   summarize(Q28 = median(weight))
+
+Q28 %>%
+ggplot(aes(x=Time,y=Q28,color=Diet)) +
+   geom_line() +
+   labs(title="Time series of chicks growing per diet, AS",x="time (days)",y="median weight (grams)") + 
+   theme_minimal()
+```
+
+### Q29*(response only). Draw a conclusion from this plot that answers the following: 
+- Which diet is best for chick growth?
+- Did the medians for each diet in Q24 tell the whole story, or did the plot give a better understanding, and why? 
+- How did a visualization give an advantage over summary statistics (i.e. the median) in this case? 
+
+**- If we consider the maximum growth, then Diet 3 has the most impressive trend upwards.**
+**- The time series plot tells a more in-depth story over the summary in Q24. We see the entire lifespan of the chicks by diet, being 0-21 days.**
+**- Similarly to what was stated previously, we see the lifespan over the x-axis which shows linear data. We also see the median weight over time per diet of the chicks, with the actual weights (not median) ranging from 35-373. This is more information than we would get from a orrelation coefficient figure for each different diet.**
