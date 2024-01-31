@@ -1,1 +1,3 @@
-# dataisbeautiful
+# Data is Beautiful
+##### Welcome to my repo / visualization portfolio! This is here to showcase my journey into data visualization. I've always gawked at the original 'dataisbeautiful' (reddit.com/r/dataisbeautiful/) since stumbling upon it in 2012. My goal is to learn various methods to create stunning representations of complex data, all while telling a compelling and accurate story. A lot of my work comes from Professor Joanna Lankester's course.
+###### In here, you'll find my use of various tools, such as: Google Colab, Jupyter Notebook, LaTeX, Python, R, RStudio, Tableau. You can also find where I integrate packages, such as: dplyr, ggplot2, pandas, seaborn, tidyverse. Some of the projects are interactive and you can play with the code directly in Colab. One special project you can view here -- youtu.be/wtpZ4VsvJF4.
